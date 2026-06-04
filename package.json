@@ -1,0 +1,18 @@
+{
+  "name": "runnet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RunNet: a runner tool website with first-party ITRA search ingestion.",
+  "scripts": {
+    "start": "node server.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload runnet",
+    "pm2:logs": "pm2 logs runnet"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "pg": "^8.21.0"
+  }
+}

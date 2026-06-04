@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RunNet | 越野跑与超马数据平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">RUNNET / TRAIL & ULTRA INTELLIGENCE</p>
+          <h1>面向越野跑与超马用户的现代化数据平台。</h1>
+          <p class="hero-text">
+            基于 ITRA 跑者搜索接入，结合本地候选库、趋势分析、双人对比、赛事数据库与 AI 建议，
+            先把跑友数据平台的核心框架搭起来。
+          </p>
+          <div class="hero-actions">
+            <a class="hero-link" href="#search-panel">开始搜索跑友</a>
+            <a class="hero-link secondary" href="#compare-panel">查看对比模块</a>
+          </div>
+        </div>
+
+        <div class="hero-stack">
+          <article class="metric-card accent">
+            <span class="metric-label">平台定位</span>
+            <strong>跑友成绩分析与赛事数据平台</strong>
+            <p>搜索 ITRA 数据、构建本地库、查看趋势、比较能力、筛选赛事。</p>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">当前阶段</span>
+            <strong>真实 ITRA 接入</strong>
+            <p>已支持搜索、解密、结构化保存，并在前端完成多模块展示。</p>
+          </article>
+        </div>
+      </header>
+
+      <section class="overview-strip" id="overview-strip">
+        <article class="overview-card">
+          <span>本地跑者库</span>
+          <strong id="overview-runner-count">0</strong>
+          <p>已保存的跑者数量</p>
+        </article>
+        <article class="overview-card">
+          <span>赛事数据库</span>
+          <strong id="overview-race-count">0</strong>
+          <p>已接入的热门赛事样本</p>
+        </article>
+        <article class="overview-card">
+          <span>平均 ITRA PI</span>
+          <strong id="overview-average-pi">0</strong>
+          <p>基于本地候选库的均值</p>
+        </article>
+        <article class="overview-card">
+          <span>当前头部跑者</span>
+          <strong id="overview-top-runner">待建立</strong>
+          <p>本地库中的最高积分跑者</p>
+        </article>
+      </section>
+
+      <main class="dashboard">
+        <section class="panel" id="search-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">模块 1</p>
+              <h2>中国跑友搜索</h2>
+            </div>
+            <p class="section-note">
+              支持姓名搜索，并在前端追加中国跑友过滤、年龄段过滤和 ITRA 积分下限过滤。
+            </p>
+          </div>
+
+          <form id="search-form" class="search-form">
+            <label class="field">
+              <span>跑者姓名</span>
+              <input id="search-name" name="name" type="search" placeholder="例如 Jim Walmsley" minlength="2" required />
+            </label>
+            <label class="field compact">
+              <span>年龄最小值</span>
+              <input id="age-min" name="ageMin" type="number" min="0" max="99" placeholder="30" />
+            </label>
+            <label class="field compact">
+              <span>年龄最大值</span>
+              <input id="age-max" name="ageMax" type="number" min="0" max="99" placeholder="39" />
+            </label>
+            <label class="field compact">
+              <span>最低 ITRA PI</span>
+              <input id="min-pi" name="minPi" type="number" min="0" max="999" placeholder="700" />
+            </label>
+            <label class="check-field">
+              <input id="china-only" name="chinaOnly" type="checkbox" />
+              <span>仅看中国跑友</span>
+            </label>
+            <button id="search-button" type="submit">搜索 ITRA</button>
+          </form>
+
+          <div id="search-status" class="status-box muted">等待搜索。</div>
+          <div id="search-results" class="card-grid"></div>
+        </section>
+
+        <section class="panel" id="detail-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">模块 2</p>
+              <h2>跑友详情与趋势分析</h2>
+            </div>
+            <p class="section-note">
+              当前基于已抓取的公开字段做阶段性分析，展示 ITRA PI、UTMB Index 估算、排名估算、趋势和完赛统计。
+            </p>
+          </div>
+
+          <div id="detail-empty" class="empty-state">
+            先从左侧搜索一个跑者，或点击卡片里的“查看分析”，这里会展开详情与趋势图。
+          </div>
+
+          <div id="detail-content" class="detail-layout hidden">
+            <article class="detail-profile">
+              <div class="detail-identity">
+                <div class="avatar-shell">
+                  <img id="detail-avatar" alt="runner avatar" />
+                </div>
+                <div>
+                  <p id="detail-country" class="detail-country"></p>
+                  <h3 id="detail-name"></h3>
+                  <p id="detail-meta" class="detail-meta"></p>
+                </div>
+              </div>
+
+              <div class="detail-stats" id="detail-stats"></div>
+              <div class="insight-copy">
+                <p id="detail-summary"></p>
+                <p id="detail-recommendation" class="muted-copy"></p>
+              </div>
+            </article>
+
+            <article class="chart-card">
+              <div class="chart-head">
+                <h3>成绩趋势</h3>
+                <span>折线图</span>
+              </div>
+              <svg id="trend-chart" class="line-chart" viewBox="0 0 520 240" preserveAspectRatio="none"></svg>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel" id="saved-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">本地候选库</p>
+              <h2>已保存跑者</h2>
+            </div>
+            <p class="section-note">保存到本地后，可以直接参与双人对比和 AI 分析。</p>
+          </div>
+
+          <div id="saved-status" class="status-box muted">正在加载本地数据。</div>
+          <div id="saved-runners" class="saved-list"></div>
+        </section>
+
+        <section class="panel" id="compare-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">模块 4</p>
+              <h2>跑友对比</h2>
+            </div>
+            <p class="section-note">
+              从已保存跑者里选择两人，对比分数、UTMB Index、配速、爬升和完赛数，并用雷达图和趋势图呈现。
+            </p>
+          </div>
+
+          <form id="compare-form" class="compare-form">
+            <label class="field">
+              <span>跑者 A</span>
+              <select id="compare-left"></select>
+            </label>
+            <label class="field">
+              <span>跑者 B</span>
+              <select id="compare-right"></select>
+            </label>
+            <button type="submit">生成对比</button>
+          </form>
+
+          <div id="compare-status" class="status-box muted">请先保存至少两位跑者。</div>
+          <div id="compare-content" class="compare-layout hidden">
+            <div id="compare-metrics" class="compare-metrics"></div>
+            <div class="chart-pair">
+              <article class="chart-card">
+                <div class="chart-head">
+                  <h3>雷达图</h3>
+                  <span>能力结构</span>
+                </div>
+                <svg id="radar-chart" class="radar-chart" viewBox="0 0 420 320" preserveAspectRatio="xMidYMid meet"></svg>
+              </article>
+              <article class="chart-card">
+                <div class="chart-head">
+                  <h3>趋势图</h3>
+                  <span>阶段变化</span>
+                </div>
+                <svg id="compare-trend-chart" class="line-chart" viewBox="0 0 520 240" preserveAspectRatio="none"></svg>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="races-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">模块 5</p>
+              <h2>赛事数据库</h2>
+            </div>
+            <p class="section-note">
+              这里先放入热门赛事样本数据，支持搜索、国家过滤和按热度/距离/爬升排序。
+            </p>
+          </div>
+
+          <form id="race-form" class="race-form">
+            <label class="field">
+              <span>关键词</span>
+              <input id="race-query" type="search" placeholder="搜索赛事名、国家或地形" />
+            </label>
+            <label class="field compact">
+              <span>国家</span>
+              <input id="race-country" type="search" placeholder="China" />
+            </label>
+            <label class="field compact">
+              <span>排序</span>
+              <select id="race-sort">
+                <option value="popularity">按热度</option>
+                <option value="distance">按距离</option>
+                <option value="elevation">按爬升</option>
+              </select>
+            </label>
+            <button type="submit">更新赛事列表</button>
+          </form>
+
+          <div id="race-status" class="status-box muted">正在加载赛事数据。</div>
+          <div id="race-results" class="race-grid"></div>
+        </section>
+
+        <section class="panel" id="ai-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">模块 6</p>
+              <h2>AI 分析</h2>
+            </div>
+            <p class="section-note">针对本地候选库中的跑者，生成水平判断、赛事建议和训练建议。</p>
+          </div>
+
+          <form id="ai-form" class="compare-form">
+            <label class="field">
+              <span>选择跑者</span>
+              <select id="ai-runner"></select>
+            </label>
+            <button type="submit">生成 AI 分析</button>
+          </form>
+
+          <div id="ai-status" class="status-box muted">请选择一位已保存跑者。</div>
+          <div id="ai-content" class="ai-layout hidden">
+            <article class="ai-card">
+              <h3>水平分析</h3>
+              <p id="ai-level"></p>
+            </article>
+            <article class="ai-card">
+              <h3>推荐赛事</h3>
+              <ul id="ai-races" class="text-list"></ul>
+            </article>
+            <article class="ai-card">
+              <h3>训练建议</h3>
+              <ul id="ai-training" class="text-list"></ul>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="runner-card-template">
+      <article class="runner-card">
+        <div class="runner-card-top">
+          <div>
+            <h3 class="runner-name"></h3>
+            <p class="runner-meta"></p>
+          </div>
+          <span class="runner-pi"></span>
+        </div>
+        <div class="runner-tags"></div>
+        <ul class="race-list"></ul>
+        <div class="runner-actions">
+          <button class="ghost-button inspect-button" type="button">查看分析</button>
+          <button class="save-button" type="button">保存到本地</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

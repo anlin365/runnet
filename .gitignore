@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+server-test.*.log
+db.sqlite3
+db.sqllite
+data/*.sqlite
+data/*.sqlite3

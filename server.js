@@ -954,6 +954,22 @@ function applyRunnerFilters(items, filters) {
   });
 }
 
+function searchSavedRunners(items, query, nationality = "") {
+  const keyword = String(query || "").trim().toLowerCase();
+  const country = String(nationality || "").trim().toLowerCase();
+
+  return items.filter((runner) => {
+    const matchesName = [
+      runner.fullName,
+      runner.firstName,
+      runner.lastName,
+      String(runner.runnerId || ""),
+    ].some((value) => String(value || "").toLowerCase().includes(keyword));
+    const matchesCountry = !country || String(runner.nationality || "").toLowerCase().includes(country);
+    return matchesName && matchesCountry;
+  });
+}
+
 async function listSavedRunners() {
   if (DB_DRIVER === "postgres") {
     const result = await pgPool.query(`
@@ -1219,10 +1235,33 @@ async function handleApi(req, res, url) {
       result.filteredCount = result.items.length;
       sendJson(res, 200, result);
     } catch (error) {
-      sendJson(res, 400, {
-        ok: false,
-        error: error.message,
-      });
+      if (/ITRA search returned/.test(error.message)) {
+        const savedItems = searchSavedRunners(
+          await listSavedRunners(),
+          url.searchParams.get("name") || "",
+          url.searchParams.get("nationality") || "",
+        );
+        const filteredItems = applyRunnerFilters(savedItems, {
+          minPi: url.searchParams.get("minPi"),
+          ageMin: url.searchParams.get("ageMin"),
+          ageMax: url.searchParams.get("ageMax"),
+          chinaOnly: url.searchParams.get("chinaOnly"),
+        });
+        sendJson(res, 200, {
+          query: url.searchParams.get("name") || "",
+          resultCount: savedItems.length,
+          filteredCount: filteredItems.length,
+          source: "saved_runners",
+          warning: error.message,
+          items: filteredItems,
+          fetchedAt: new Date().toISOString(),
+        });
+      } else {
+        sendJson(res, 400, {
+          ok: false,
+          error: error.message,
+        });
+      }
     }
     return;
   }

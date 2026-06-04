@@ -602,6 +602,20 @@ function decryptItraPayload(payload) {
   return JSON.parse(decrypted.toString("utf8"));
 }
 
+async function readItraJsonResponse(response) {
+  const rawBody = await response.text();
+
+  if (!rawBody.trim()) {
+    throw new Error("ITRA search returned an empty response. Please try again later.");
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    throw new Error("ITRA search returned a non-JSON response. Please try again later.");
+  }
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -882,7 +896,9 @@ async function searchItraRunner(name, nationality = "", start = 1, count = 10) {
     method: "POST",
     headers: {
       ...DEFAULT_HEADERS,
+      accept: "application/json, text/javascript, */*; q=0.01",
       "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "x-requested-with": "XMLHttpRequest",
       "x-csrf-token": csrfToken,
       cookie: cookieHeader,
       origin: "https://itra.run",
@@ -895,7 +911,7 @@ async function searchItraRunner(name, nationality = "", start = 1, count = 10) {
     throw new Error(`ITRA search failed with status ${response.status}.`);
   }
 
-  const encryptedPayload = await response.json();
+  const encryptedPayload = await readItraJsonResponse(response);
   const decryptedPayload = decryptItraPayload(encryptedPayload);
   const items = Array.isArray(decryptedPayload.Results) ? decryptedPayload.Results.map(normalizeRunner) : [];
 

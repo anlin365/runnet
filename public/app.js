@@ -771,13 +771,19 @@ searchForm.addEventListener("submit", async (event) => {
   setStatus(searchStatus, `正在搜索 ITRA 跑者：${name}`, "muted");
 
   try {
-    const params = new URLSearchParams({
-      name,
-      ageMin,
-      ageMax,
-      minPi,
-      chinaOnly: String(chinaOnly),
-    });
+    const params = new URLSearchParams({ name });
+    if (ageMin) {
+      params.set("ageMin", ageMin);
+    }
+    if (ageMax) {
+      params.set("ageMax", ageMax);
+    }
+    if (minPi) {
+      params.set("minPi", minPi);
+    }
+    if (chinaOnly) {
+      params.set("chinaOnly", "true");
+    }
     const response = await fetch(`/api/itra/search?${params.toString()}`);
     const payload = await response.json();
 

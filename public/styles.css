@@ -250,7 +250,7 @@ button:hover {
 }
 
 .search-form {
-  grid-template-columns: minmax(220px, 1.3fr) repeat(3, minmax(104px, 0.5fr)) minmax(118px, auto) auto;
+  grid-template-columns: minmax(220px, 1.3fr) repeat(3, minmax(104px, 0.5fr)) minmax(118px, auto) minmax(118px, auto) minmax(132px, auto);
 }
 
 .compare-form {
@@ -312,6 +312,12 @@ button {
   background: var(--cyan);
   color: #ffffff;
   cursor: pointer;
+}
+
+.secondary-button {
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid var(--line);
 }
 
 button:disabled {

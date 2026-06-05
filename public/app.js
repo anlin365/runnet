@@ -1,5 +1,6 @@
 const searchForm = document.getElementById("search-form");
 const searchButton = document.getElementById("search-button");
+const syncItraButton = document.getElementById("sync-itra-button");
 const searchStatus = document.getElementById("search-status");
 const searchResults = document.getElementById("search-results");
 const savedStatus = document.getElementById("saved-status");
@@ -768,7 +769,7 @@ searchForm.addEventListener("submit", async (event) => {
   searchButton.disabled = true;
   searchButton.textContent = "搜索中...";
   searchResults.innerHTML = "";
-  setStatus(searchStatus, `正在搜索 ITRA 跑者：${name}`, "muted");
+  setStatus(searchStatus, `正在搜索本地跑友库：${name}`, "muted");
 
   try {
     const params = new URLSearchParams({ name });
@@ -784,7 +785,7 @@ searchForm.addEventListener("submit", async (event) => {
     if (chinaOnly) {
       params.set("chinaOnly", "true");
     }
-    const response = await fetch(`/api/itra/search?${params.toString()}`);
+    const response = await fetch(`/api/runners/search?${params.toString()}`);
     const payload = await response.json();
 
     if (!response.ok) {
@@ -811,7 +812,70 @@ searchForm.addEventListener("submit", async (event) => {
     setStatus(searchStatus, error.message, "error");
   } finally {
     searchButton.disabled = false;
-    searchButton.textContent = "搜索 ITRA";
+    searchButton.textContent = "搜索本地库";
+  }
+});
+
+syncItraButton.addEventListener("click", async () => {
+  const formData = new FormData(searchForm);
+  const name = String(formData.get("name") || "").trim();
+  const ageMin = String(formData.get("ageMin") || "").trim();
+  const ageMax = String(formData.get("ageMax") || "").trim();
+  const minPi = String(formData.get("minPi") || "").trim();
+  const chinaOnly = document.getElementById("china-only").checked;
+
+  if (name.length < 2) {
+    setStatus(searchStatus, "姓名至少需要 2 个字符。", "error");
+    return;
+  }
+
+  searchButton.disabled = true;
+  syncItraButton.disabled = true;
+  syncItraButton.textContent = "同步中...";
+  searchResults.innerHTML = "";
+  setStatus(searchStatus, `正在从 ITRA 同步：${name}`, "muted");
+
+  try {
+    const params = new URLSearchParams({ name });
+    if (ageMin) {
+      params.set("ageMin", ageMin);
+    }
+    if (ageMax) {
+      params.set("ageMax", ageMax);
+    }
+    if (minPi) {
+      params.set("minPi", minPi);
+    }
+    if (chinaOnly) {
+      params.set("chinaOnly", "true");
+    }
+
+    const response = await fetch(`/api/itra/sync?${params.toString()}`);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error || "ITRA 同步失败");
+    }
+
+    state.searchResults = payload.items || [];
+    if (!state.searchResults.length) {
+      setStatus(searchStatus, `ITRA 没有返回与“${name}”匹配的跑友。`, "muted");
+      searchResults.appendChild(createEmptyState("同步完成，但没有返回结果。"));
+      return;
+    }
+
+    await Promise.all([loadSavedRunners(), loadOverview()]);
+    setStatus(searchStatus, `已从 ITRA 同步 ${payload.syncedCount || state.searchResults.length} 位跑友。`, "success");
+    state.searchResults.forEach((runner) => {
+      searchResults.appendChild(buildRunnerCard(runner));
+    });
+    renderRunnerDetail(state.searchResults[0]);
+  } catch (error) {
+    setStatus(searchStatus, error.message, "error");
+  } finally {
+    searchButton.disabled = false;
+    syncItraButton.disabled = false;
+    syncItraButton.textContent = "从 ITRA 同步";
   }
 });
 

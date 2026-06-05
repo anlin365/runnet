@@ -7,7 +7,7 @@ const { URL } = require("node:url");
 const { Pool } = require("pg");
 
 const HOST = process.env.HOST || "127.0.0.1";
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 3001);
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DATA_DIR = path.join(ROOT, "data");
@@ -1266,11 +1266,64 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/itra/sync") {
+    try {
+      const result = await searchItraRunner(
+        url.searchParams.get("name") || "",
+        url.searchParams.get("nationality") || "",
+        Number(url.searchParams.get("start") || 1),
+        Number(url.searchParams.get("count") || 10),
+      );
+      result.items = applyRunnerFilters(result.items, {
+        minPi: url.searchParams.get("minPi"),
+        ageMin: url.searchParams.get("ageMin"),
+        ageMax: url.searchParams.get("ageMax"),
+        chinaOnly: url.searchParams.get("chinaOnly"),
+      });
+      result.filteredCount = result.items.length;
+      await upsertRunners(result.items);
+      sendJson(res, 200, {
+        ...result,
+        source: "itra",
+        syncedCount: result.items.length,
+      });
+    } catch (error) {
+      sendJson(res, 400, {
+        ok: false,
+        error: error.message,
+      });
+    }
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/runners") {
     const items = await listSavedRunners();
     sendJson(res, 200, {
       count: items.length,
       items,
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/runners/search") {
+    const savedItems = searchSavedRunners(
+      await listSavedRunners(),
+      url.searchParams.get("name") || "",
+      url.searchParams.get("nationality") || "",
+    );
+    const filteredItems = applyRunnerFilters(savedItems, {
+      minPi: url.searchParams.get("minPi"),
+      ageMin: url.searchParams.get("ageMin"),
+      ageMax: url.searchParams.get("ageMax"),
+      chinaOnly: url.searchParams.get("chinaOnly"),
+    });
+    sendJson(res, 200, {
+      query: url.searchParams.get("name") || "",
+      resultCount: savedItems.length,
+      filteredCount: filteredItems.length,
+      source: "saved_runners",
+      items: filteredItems,
+      fetchedAt: new Date().toISOString(),
     });
     return;
   }
